@@ -299,19 +299,26 @@ def call_validators(validators, data):
         data = validators(data)
     elif isinstance(validators, list):
         error_collection = []
-        for val_fun in validators:
-            if callable(val_fun):
-                try:
-                    data = val_fun(data)
-                except NotValidButContinueError as e:
-                    # Continue calling next validators with the same input.
-                    error_collection.append(e)
-                    continue
-            else:
-                raise SchemaError(ValidationCode.VAL_NOT_CALLABLE)
+        try:
+            for val_fun in validators:
+                if callable(val_fun):
+                    try:
+                        data = val_fun(data)
+                    except NotValidButContinueError as e:
+                        # Continue calling next validators with the same input.
+                        error_collection.append(e)
+                        continue
+                else:
+                    raise SchemaError(ValidationCode.VAL_NOT_CALLABLE)
+        except NotValidError as e:
+            error_collection.append(e)
+
         if error_collection:
-            jsonized_errors = [e.jsonize() for e in error_collection]
-            raise NotValidError(ValidationCode.MANY_ERRORS, jsonized_errors)
+            if len(error_collection) == 1:
+                raise error_collection[0]
+            else:
+                jsonized_errors = [e.jsonize() for e in error_collection]
+                raise NotValidError(ValidationCode.MANY_ERRORS, jsonized_errors)
     else:
         raise SchemaError(ValidationCode.VAL_NOT_CALLABLE)
     return data

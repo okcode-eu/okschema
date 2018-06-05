@@ -270,6 +270,17 @@ bad_tests = [
             {'code': ValidationCode.BAD_VALUE, 'details': 1}, {'code': ValidationCode.BAD_VALUE, 'details': 5}
         ]}}}
     ),
+    # Validators with continuation and normal
+    (
+        {'b':  {'@t': 'int', '@val': [bad_val1_cont, bad_val2_cont, val_err]}},
+        {'b': 12},
+        {'b': {'code': ValidationCode.MANY_ERRORS, 'details': [
+            {'code': ValidationCode.BAD_VALUE, 'details': 1}, {'code': ValidationCode.BAD_VALUE, 'details': 5},
+            {'code': ValidationCode.BAD_VALUE}
+        ]}}
+    ),
+    # TODO: test MANY_ERRORS with lists of validators when only one returns an error
+    # GT
     (
         {'a': {'@t': 'str'}},
         {'a': ''},
