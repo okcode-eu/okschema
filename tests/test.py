@@ -1,5 +1,5 @@
 from okschema import NotValidError, NotValidButContinueError, ValidationCode, \
-    ValidationError, validate, val_date, val_datetime, NotHere
+    ValidationError, validate, val_date, val_datetime, NotHere, fmt_uuid
 import decimal
 import datetime as dt
 import unittest
