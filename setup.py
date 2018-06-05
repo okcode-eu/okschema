@@ -13,7 +13,7 @@ setup(
     author_email = "stach@stachlewski.info",
     description = "json validation library",
     license = "BSD",
-    url = "http://packages.python.org/okschema", # TODO: gh
+    url = "https://github.com/okcode-eu/okschema",
     packages=['okschema'],
     long_description=read('README.md'),
 )
