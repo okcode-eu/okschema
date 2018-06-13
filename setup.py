@@ -11,7 +11,7 @@ setup(
     version = "0.1.0",
     author = "Krzysztof Stachlewski",
     author_email = "stach@stachlewski.info",
-    description = "json validation library",
+    description = "Validate JSON data using a schema written in Python",
     license = "BSD",
     url = "https://github.com/okcode-eu/okschema",
     packages=['okschema'],

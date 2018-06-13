@@ -1,4 +1,4 @@
-# Json API data validation
+# Validate JSON data using a schema written in Python
 
 # Examples
 
