@@ -1,5 +1,5 @@
 import decimal, re, enum
-import datetime as dt
+import pendulum
 
 
 fmt_uuid = '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}'
@@ -8,14 +8,14 @@ fmt_lang = '[A-Za-z]{1,3}'
 
 def val_datetime(val):
     try:
-        return dt.datetime.strptime(val, "%Y-%m-%dT%H:%M:%S.%fZ")
+        return pendulum.from_format(val, "YYYY-MM-DDTHH:mm:ss.SSSSSS")
     except ValueError as e:
         raise NotValidError(ValidationCode.BAD_TYPE, "bad datetime format")
 
 
 def val_date(val):
     try:
-        return dt.datetime.strptime(val, "%Y-%m-%d")
+        return pendulum.from_format(val, "YYYY-MM-DD")
     except ValueError as e:
         raise NotValidError(ValidationCode.BAD_TYPE, "bad date format")
 

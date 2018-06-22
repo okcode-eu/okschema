@@ -1,7 +1,7 @@
 from okschema import NotValidError, NotValidButContinueError, ValidationCode, \
     ValidationError, validate, val_date, val_datetime, NotHere, fmt_uuid
 import decimal
-import datetime as dt
+import pendulum as dt
 import unittest
 
 
@@ -165,7 +165,7 @@ ok_tests = [
     (
         {'a': {'@t': 'str', '@val': val_datetime}},
         {'a': '2018-03-28T10:29:32.358Z'},
-        {'a': dt.datetime(2018, 3, 28, 10, 29, 32, 358000)}
+        {'a': dt.datetime(2018, 3, 28, 10, 29, 32, 358)}
     ),
     # Extra dict fields must be ignored
     (

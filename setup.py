@@ -15,5 +15,8 @@ setup(
     license = "BSD",
     url = "https://github.com/okcode-eu/okschema",
     packages=['okschema'],
+    install_requires=[
+        'pendulum',
+    ],
     long_description=read('README.md'),
 )
