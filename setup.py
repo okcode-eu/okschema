@@ -8,7 +8,7 @@ def read(fname):
 
 setup(
     name = "okschema",
-    version = "0.1.0",
+    version = "0.1.1",
     author = "Krzysztof Stachlewski",
     author_email = "stach@stachlewski.info",
     description = "Validate JSON data using a schema written in Python",
