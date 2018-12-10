@@ -100,6 +100,9 @@ def validate(schema, data):
     return data
 
 
+# TODO: design a schema to validate any possible schema
+
+
 def _validate(schema, data):
     """
     Validates a single json value.
@@ -109,47 +112,13 @@ def _validate(schema, data):
     :raises: ValidationError, SchemaError
     """
     if isinstance(schema, list):
-        # Handle lists of values.
-        if len(schema) == 2:
-            list_opts = schema[1]
-            # TODO: validate list opts
-        item_schema = schema[0]
-        error_list = []
-        has_errors = False
-        result_data = []
-        if data is NotHere:
-            raise NotValidError(ValidationCode.MISSING)
-            # TODO: handle list opts, check list's '@required' opt.
-        if not isinstance(data, list):
-            raise NotValidError(ValidationCode.BAD_TYPE)
-        for data_item in data:
-            try:
-                item_result_data = _validate(item_schema, data_item)
-                result_data.append(item_result_data)
-                error_list.append(None)
-            except NotValidError as e:
-                error_list.append(e.jsonize())
-                has_errors = True
-        if has_errors:
-            # Errors in list items.
-            raise NotValidError(_StructureCode.LIST, error_list)
-        return result_data
+        return handle_list(schema, data)
 
     ftype = determine_field_type(schema)
 
     # Preparse and handle edge cases.
     if data is NotHere:
-        # No value supplied in json. Check if it's allowed and if there is a default value.
-        optional = get_bool_opt_from_schema(schema, '@optional')
-        if not optional:
-            raise NotValidError(ValidationCode.MISSING)
-        try:
-            default = schema['@default']
-            if callable(default):
-                default = default()
-        except KeyError:
-            return NotHere  # Optional field has no default.
-        return default  # Default is returned as is, no validators are runned.
+        return handle_optional_and_default_when_data_nothere(schema)
     else:
         if data is not None:
             data = cast_data(ftype, data)  # raises InternalValidationError, SchemaError
@@ -191,6 +160,48 @@ def _validate(schema, data):
         else:
             rc_data = data
     return rc_data
+
+
+def handle_optional_and_default_when_data_nothere(schema):
+    # No value supplied in json. Check if it's allowed and if there is a default value.
+    optional = get_bool_opt_from_schema(schema, '@optional')
+    if not optional:
+        raise NotValidError(ValidationCode.MISSING)
+    try:
+        default = schema['@default']
+        if callable(default):
+            default = default()
+    except KeyError:
+        return NotHere  # Optional field has no default.
+    return default  # Default is returned as is, no validators are runned.
+
+
+def handle_list(schema, data):
+    list_opts = {}
+    if len(schema) == 2:
+        list_opts = schema[1]  # must behave as dict
+    item_schema = schema[0]
+    error_list = []
+    has_errors = False
+    result_data = []
+    if data is NotHere:
+        return handle_optional_and_default_when_data_nothere(list_opts)
+    if not isinstance(data, list):
+        raise NotValidError(ValidationCode.BAD_TYPE)
+    # TODO: handle list length opts
+    # TODO: handle list-level validators
+    for data_item in data:
+        try:
+            item_result_data = _validate(item_schema, data_item)
+            result_data.append(item_result_data)
+            error_list.append(None)
+        except NotValidError as e:
+            error_list.append(e.jsonize())
+            has_errors = True
+    if has_errors:
+        # Errors in list items.
+        raise NotValidError(_StructureCode.LIST, error_list)
+    return result_data
 
 
 def determine_field_type(schema):
@@ -280,7 +291,7 @@ def verify_value_options(schema, ftype, data):
 def get_bool_opt_from_schema(schema, opt):
     rc = None
     if isinstance(schema, str):
-        # TODO: remove the string parsing
+        # TODO: remove string parsing?
         # Look for option in the string.
         opts = schema.split(',')[1:]
         rc = opt in opts

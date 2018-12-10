@@ -144,13 +144,36 @@ ok_tests = [
         []
     ),
     # Optional lists.
-    # (
-    #     {
-    #         'a': ['int', {'@required': False}]
-    #     },
-    #     {
-    #     },
-    # ),
+    (
+        {
+            'a': ['int', {'@optional': True}]
+        },
+        {
+        },
+    ),
+    (
+        {
+            'a': [{'@t': 'int'}, {'@optional': True}]
+        },
+        {
+        },
+    ),
+    (
+        {
+            'a': [{'@t': 'int'}, {'@optional': True}]
+        },
+        {
+            'a': []
+        },
+    ),
+    (
+        {
+            'a': [{'@t': 'int'}, {'@optional': True}]
+        },
+        {
+            'a': [1, 3]
+        },
+    ),
     # Blank strings
     (
         {'a': {'@t': 'str', '@blank': True}},
@@ -207,6 +230,15 @@ ok_tests = [
         {
             'a': 10,
             'b': 5
+        }
+    ),
+    # @in
+    (
+        {
+            'a': {'@t': 'int', '@in': [1, 2, 3]}
+        },
+        {
+            'a': 1
         }
     )
 ]
@@ -372,6 +404,7 @@ bad_list_tests = [
     # )
 ]
 
+
 class TestSchema(unittest.TestCase):
 
     def test_ok(self):
@@ -398,7 +431,6 @@ class TestSchema(unittest.TestCase):
             print("Failed test_bad @%d iteration: %s" % (i, test))
             raise
 
-
     def test_bad_lists(self):
         try:
             for i, test in enumerate(bad_list_tests):
@@ -411,5 +443,6 @@ class TestSchema(unittest.TestCase):
         except Exception as e:
             print("Failed test_bad_lists @%d iteration: %s" % (i, test))
             raise
+
 
 unittest.main()
