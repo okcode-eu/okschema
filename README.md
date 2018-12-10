@@ -51,7 +51,7 @@ async def add_user_account(request, m):
 schemaA = {
     'outer': {
         'a': 'int',
-        'b': {'@t': 'str', '@lt': 2, '@required': False, '@null': True, '@blank': True},
+        'b': {'@t': 'str', '@lt': 2, '@optional': True, '@null': True, '@blank': True},
         'c': [{'@t': 'str', '@in': ['x', 'y', 'z']}]
     },
     'is_ok': {'@type': 'bool', '@default': True}
