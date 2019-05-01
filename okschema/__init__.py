@@ -1,4 +1,5 @@
 from .schema import  NotValidError, NotValidButContinueError, ValidationCode, SchemaCode, \
-    validate, ValidationError, SchemaError, val_date, val_datetime, NotHere, fmt_lang, fmt_uuid
+    validate, ValidationError, SchemaError, NotHere, Engine
+from .helpers import  val_date, val_datetime, fmt_lang, fmt_uuid
 
-VERSION = '0.2'
+VERSION = '0.3'

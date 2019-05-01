@@ -1,12 +1,13 @@
 from okschema import NotValidError, NotValidButContinueError, ValidationCode, \
-    ValidationError, validate, val_date, val_datetime, NotHere, fmt_uuid
+    ValidationError, validate, NotHere, Engine
+from okschema.helpers import val_date, val_datetime, fmt_uuid, AppValidationCode
 import decimal
 import pendulum as dt
-import unittest
+import pytest
 
 
 def val_err(x):
-    raise NotValidError(ValidationCode.BAD_VALUE)
+    raise NotValidError(AppValidationCode.BAD_VALUE)
 
 
 def dict_lteq_12(d):
@@ -18,17 +19,17 @@ def dict_lteq_12(d):
 
 
 def bad_val1_cont(x):
-    raise NotValidButContinueError(ValidationCode.BAD_VALUE, 1)
+    raise NotValidButContinueError(AppValidationCode.BAD_VALUE, 1)
 
 
 def bad_val2_cont(x):
-    raise NotValidButContinueError(ValidationCode.BAD_VALUE, 5)
+    raise NotValidButContinueError(AppValidationCode.BAD_VALUE, 5)
 
 
 ok_tests = [
     ('int', 12),
     ('string', 'aaa'),
-    ('float', '121.12', 121.12),
+    ('float', 121.12, 121.12),
     ('decimal', '121.1222222', decimal.Decimal('121.1222222')),
     ('bool', False),
     ({'@t': 'int'}, 12),
@@ -107,73 +108,6 @@ ok_tests = [
             'sum': 12
         }
     ),
-    (
-        ['int'],
-        [1, 2, 3]
-    ),
-    (
-        [{'@t': 'int', '@lt': 4}],
-        [1, 2, 3]
-    ),
-    (
-        {
-            'm': [{
-                    'a': {'@t': 'int', '@lt': 4},
-                    'b': {'@t': 'int', '@lt': 5},
-                    'c': 'str'
-                }
-            ]
-        },
-        {'m': [{'a': 1, 'b': 2, 'c': 'x'}, {'a': 1, 'b': 2, 'c': 'y'}]},
-    ),
-    (
-        [['int']],
-        [[1, 1, 2]]
-    ),
-    # Empty lists
-    (
-        {
-            'a': ['int']
-        },
-        {
-            'a': []
-        }
-    ),
-    (
-        ['int'],
-        []
-    ),
-    # Optional lists.
-    (
-        {
-            'a': ['int', {'@optional': True}]
-        },
-        {
-        },
-    ),
-    (
-        {
-            'a': [{'@t': 'int'}, {'@optional': True}]
-        },
-        {
-        },
-    ),
-    (
-        {
-            'a': [{'@t': 'int'}, {'@optional': True}]
-        },
-        {
-            'a': []
-        },
-    ),
-    (
-        {
-            'a': [{'@t': 'int'}, {'@optional': True}]
-        },
-        {
-            'a': [1, 3]
-        },
-    ),
     # Blank strings
     (
         {'a': {'@t': 'str', '@blank': True}},
@@ -240,15 +174,28 @@ ok_tests = [
         {
             'a': 1
         }
+    ),
+    # more data then needed
+    (
+        {'a': 'int', 'b': 'int'},
+        {'a': 10, 'b': 20, 'c': 30},
+        {'a': 10, 'b': 20}
     )
+    # regexp TODO:
 ]
 
 bad_tests = [
     (
-        {'@t': 'string', '@val': val_err}, 'abc', {'code': ValidationCode.BAD_VALUE}
+        'int', '123', {'code': ValidationCode.BAD_TYPE}
     ),
     (
-        {'a': {'@t': 'string', '@val': val_err}}, {'a': 'abc'}, {'a': {'code': ValidationCode.BAD_VALUE}}
+        'float', '123.1', {'code': ValidationCode.BAD_TYPE}
+    ),
+    (
+        {'@t': 'string', '@val': val_err}, 'abc', {'code': AppValidationCode.BAD_VALUE}
+    ),
+    (
+        {'a': {'@t': 'string', '@val': val_err}}, {'a': 'abc'}, {'a': {'code': AppValidationCode.BAD_VALUE}}
     ),
     # Fields missing, constraint errors
     (
@@ -267,7 +214,7 @@ bad_tests = [
                 'c': 3
             }
         }, {
-            'a': {'code': ValidationCode.BAD_VALUE},
+            'a': {'code': AppValidationCode.BAD_VALUE},
             'b': {'code': ValidationCode.MISSING},
             'sub1': {
                 'c': {'code': ValidationCode.NOT_GT, 'details': 5}
@@ -299,7 +246,7 @@ bad_tests = [
         {'a': {'b':  {'@t': 'int', '@val': [bad_val1_cont, bad_val2_cont]}}},
         {'a': {'b': 12}},
         {'a': {'b': {'code': ValidationCode.MANY_ERRORS, 'details': [
-            {'code': ValidationCode.BAD_VALUE, 'details': 1}, {'code': ValidationCode.BAD_VALUE, 'details': 5}
+            {'code': AppValidationCode.BAD_VALUE, 'details': 1}, {'code': AppValidationCode.BAD_VALUE, 'details': 5}
         ]}}}
     ),
     # Validators with continuation and normal
@@ -307,8 +254,8 @@ bad_tests = [
         {'b':  {'@t': 'int', '@val': [bad_val1_cont, bad_val2_cont, val_err]}},
         {'b': 12},
         {'b': {'code': ValidationCode.MANY_ERRORS, 'details': [
-            {'code': ValidationCode.BAD_VALUE, 'details': 1}, {'code': ValidationCode.BAD_VALUE, 'details': 5},
-            {'code': ValidationCode.BAD_VALUE}
+            {'code': AppValidationCode.BAD_VALUE, 'details': 1}, {'code': AppValidationCode.BAD_VALUE, 'details': 5},
+            {'code': AppValidationCode.BAD_VALUE}
         ]}}
     ),
     # TODO: test MANY_ERRORS with lists of validators when only one returns an error
@@ -346,6 +293,76 @@ bad_tests = [
         {'a': {'b': 'int'}},
         {'dadas': {}, 12: '2222', None: '121'},
         ({'a': {'code': ValidationCode.MISSING}})
+    )
+]
+
+ok_list_tests = [
+    (
+        ['int'],
+        [1, 2, 3]
+    ),
+    (
+        [{'@t': 'int', '@lt': 4}],
+        [1, 2, 3]
+    ),
+    (
+        {
+            'm': [{
+                    'a': {'@t': 'int', '@lt': 4},
+                    'b': {'@t': 'int', '@lt': 5},
+                    'c': 'str'
+                }
+            ]
+        },
+        {'m': [{'a': 1, 'b': 2, 'c': 'x'}, {'a': 1, 'b': 2, 'c': 'y'}]},
+    ),
+    (
+        [['int']],
+        [[1, 1, 2]]
+    ),
+    # Empty lists
+    (
+        {
+            'a': ['int']
+        },
+        {
+            'a': []
+        }
+    ),
+    (
+        ['int'],
+        []
+    ),
+    # Optional lists.
+    (
+        {
+            'a': ['int', {'@optional': True}]
+        },
+        {
+        },
+    ),
+    (
+        {
+            'a': [{'@t': 'int'}, {'@optional': True}]
+        },
+        {
+        },
+    ),
+    (
+        {
+            'a': [{'@t': 'int'}, {'@optional': True}]
+        },
+        {
+            'a': []
+        },
+    ),
+    (
+        {
+            'a': [{'@t': 'int'}, {'@optional': True}]
+        },
+        {
+            'a': [1, 3]
+        },
     )
 ]
 
@@ -404,45 +421,88 @@ bad_list_tests = [
     # )
 ]
 
+ok_cast_str_tests = [
+    ('decimal', '121.1222222', decimal.Decimal('121.1222222')),
+    ('float', '121.1222222', 121.1222222),
+    ('int', '121', 121),
+    ('bool', 'true', True),
+    ('bool', 'false', False),
+]
 
-class TestSchema(unittest.TestCase):
+# No cast from string.
+bad_cast_str_tests = [
+    ('float', '121.1222222', {'code': ValidationCode.BAD_TYPE}),
+    ('int', '121', {'code': ValidationCode.BAD_TYPE}),
+    ('bool', 'true', {'code': ValidationCode.BAD_TYPE}),
+    ('bool', 'false', {'code': ValidationCode.BAD_TYPE}),
+]
+
+ok_strict_types_tests = [
+    ('decimal', decimal.Decimal('121.1222222'), decimal.Decimal('121.1222222')),
+    ('float', 121.1222222, 121.1222222),
+    ('int', 121, 121),
+    ('bool', True, True),
+    ('bool', False, False),
+]
+
+# Strict types on, but failures.
+bad_strict_types_tests = [
+    ('decimal', 121, {'code': ValidationCode.BAD_TYPE}),
+    ('decimal', 121.12, {'code': ValidationCode.BAD_TYPE}),
+    ('decimal', '121.12', {'code': ValidationCode.BAD_TYPE}),
+    ('float', 121, {'code': ValidationCode.BAD_TYPE}),
+    ('bool', 'true', {'code': ValidationCode.BAD_TYPE}),
+    ('bool', 'false', {'code': ValidationCode.BAD_TYPE}),
+]
+
+
+class TestSchema:
+
+    def one_test_ok(self, test, **kwargs):
+        if len(test) == 2:
+            assert validate(test[0], test[1], **kwargs) == test[1]
+        else:
+            assert validate(test[0], test[1], **kwargs) == test[2]
+
+    def one_test_bad(self, test, **kwargs):
+        try:
+            result = validate(test[0], test[1], **kwargs)
+            assert False
+        except ValidationError as e:
+            assert e.js == test[2]
 
     def test_ok(self):
-        try:
-            for i, test in enumerate(ok_tests):
-                if len(test) == 2:
-                    self.assertEqual(validate(test[0], test[1]), test[1])
-                else:
-                    self.assertEqual(validate(test[0], test[1]), test[2])
-        except Exception as e:
-            print("Failed test_ok @%d iteration: %s" % (i, test))
-            raise
+        for i, test in enumerate(ok_tests):
+            self.one_test_ok(test)
+
+    def test_ok_lists(self):
+        for i, test in enumerate(ok_list_tests):
+            self.one_test_ok(test)
 
     def test_bad(self):
-        try:
-            for i, test in enumerate(bad_tests):
-                try:
-                    result = validate(test[0], test[1])
-                    self.fail("should raise")
-                except ValidationError as e:
-                    #print(e.js)
-                    self.assertEqual(e.js, test[2])
-        except Exception as e:
-            print("Failed test_bad @%d iteration: %s" % (i, test))
-            raise
+        for i, test in enumerate(bad_tests):
+            self.one_test_bad(test)
 
     def test_bad_lists(self):
-        try:
-            for i, test in enumerate(bad_list_tests):
-                try:
-                    result = validate(test[0], test[1])
-                    self.fail("should raise")
-                except ValidationError as e:
-                    #print(e.js)
-                    self.assertEqual(e.js, test[2])
-        except Exception as e:
-            print("Failed test_bad_lists @%d iteration: %s" % (i, test))
-            raise
+        for i, test in enumerate(bad_list_tests):
+            self.one_test_bad(test)
 
+    def test_ok_cast_str(self):
+        kwargs = dict(cast_from_string=True)
+        for i, test in enumerate(ok_cast_str_tests):
+            self.one_test_ok(test, **kwargs)
 
-unittest.main()
+    def test_bad_cast_str(self):
+        kwargs = dict(cast_from_string=False)
+        for i, test in enumerate(bad_cast_str_tests):
+            self.one_test_bad(test, **kwargs)
+
+    def test_ok_strict_types(self):
+        kwargs = dict(strict_types=True)
+        for i, test in enumerate(ok_strict_types_tests):
+            self.one_test_ok(test, **kwargs)
+
+    def test_bad_strict_types(self):
+        kwargs = dict(strict_types=True)
+        for i, test in enumerate(bad_strict_types_tests):
+            self.one_test_bad(test, **kwargs)
