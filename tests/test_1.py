@@ -4,6 +4,12 @@ from okschema.helpers import val_date, val_datetime, fmt_uuid, AppValidationCode
 import decimal
 import pendulum as dt
 import pytest
+import enum
+
+
+class FakeEnumE(enum.IntEnum):
+    A = 1
+    B = 2
 
 
 def val_err(x):
@@ -180,8 +186,13 @@ ok_tests = [
         {'a': 'int', 'b': 'int'},
         {'a': 10, 'b': 20, 'c': 30},
         {'a': 10, 'b': 20}
-    )
+    ),
     # regexp TODO:
+    # enum
+    (
+        {'a': {'@t': 'int', '@in': FakeEnumE}},
+        {'a': 1}
+    )
 ]
 
 bad_tests = [
@@ -293,6 +304,12 @@ bad_tests = [
         {'a': {'b': 'int'}},
         {'dadas': {}, 12: '2222', None: '121'},
         ({'a': {'code': ValidationCode.MISSING}})
+    ),
+    # Enum
+    (
+        {'a': {'@t': 'int', '@in': FakeEnumE}},
+        {'a': 3},
+        {'a': {'code': ValidationCode.NOT_IN}}
     )
 ]
 

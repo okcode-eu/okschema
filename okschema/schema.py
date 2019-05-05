@@ -4,6 +4,7 @@ import re
 import enum
 import math
 from typing import Any
+import inspect
 
 
 class NotHereClass:
@@ -289,7 +290,9 @@ class Engine:
             if optname[0] == '@':
                 optname = optname[1:]
                 if optname == 'in':
-                   if data not in optval:
+                    if inspect.isclass(optval) and issubclass(optval, enum.Enum):
+                        optval = set(optval)
+                    if data not in optval:
                         raise NotValidError(ValidationCode.NOT_IN)
                 elif optname in ['gt', 'gteq', 'lt', 'lteq', 'neq', 'eq']:
                     if ftype not in ['int', 'float', 'decimal', 'string', 'str']:
