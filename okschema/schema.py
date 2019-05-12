@@ -33,8 +33,8 @@ class ValidationCode(enum.IntEnum):
     NOT_GTEQ = 10
     NOT_LT = 11
     NOT_LTEQ = 12
-    NOT_EQ = 13
-    EQ = 14
+    NOT_NEQ = 13
+    NOT_EQ = 14
 
 
 class SchemaError(Exception):
@@ -316,10 +316,10 @@ class Engine:
                             raise NotValidError(ValidationCode.NOT_LTEQ, optval)
                     elif optname == 'neq':
                         if not xdata != optval:
-                            raise NotValidError(ValidationCode.NOT_EQ, optval)
+                            raise NotValidError(ValidationCode.NOT_NEQ, optval)
                     elif optname == 'eq':
                         if not xdata == optval:
-                            raise NotValidError(ValidationCode.EQ, optval)
+                            raise NotValidError(ValidationCode.NOT_EQ, optval)
                 elif optname == 'val':
                     data = self.call_validators(optval, data)
         return data

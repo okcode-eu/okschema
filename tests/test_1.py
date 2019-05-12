@@ -192,6 +192,16 @@ ok_tests = [
     (
         {'a': {'@t': 'int', '@in': FakeEnumE}},
         {'a': 1}
+    ),
+    # eq
+    (
+        {'a': {'@t': 'str', '@eq': 3}},
+        {'a': 'pol'}
+    ),
+    # neq
+    (
+        {'a': {'@t': 'str', '@neq': 3}},
+        {'a': 'pl'}
     )
 ]
 
@@ -270,7 +280,12 @@ bad_tests = [
         ]}}
     ),
     # TODO: test MANY_ERRORS with lists of validators when only one returns an error
-    # GT
+    # Blank strings
+    (
+        {'a': {'@t': 'str', '@blank': False}},
+        {'a': ''},
+        {'a': {'code': ValidationCode.NOT_GT, 'details': 0}}
+    ),
     (
         {'a': {'@t': 'str'}},
         {'a': ''},
@@ -310,6 +325,18 @@ bad_tests = [
         {'a': {'@t': 'int', '@in': FakeEnumE}},
         {'a': 3},
         {'a': {'code': ValidationCode.NOT_IN}}
+    ),
+    # eq
+    (
+        {'a': {'@t': 'str', '@eq': 3}},
+        {'a': 'pl'},
+        {'a': {'code': ValidationCode.NOT_EQ, 'details': 3}}
+    ),
+    # neq
+    (
+        {'a': {'@t': 'str', '@neq': 3}},
+        {'a': 'ple'},
+        {'a': {'code': ValidationCode.NOT_NEQ, 'details': 3}}
     )
 ]
 
