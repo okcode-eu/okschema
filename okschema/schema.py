@@ -262,6 +262,8 @@ class Engine:
                         raise NotValidError(ValidationCode.BAD_TYPE)
                 else:
                     raise NotValidError(ValidationCode.BAD_TYPE)
+        elif ftype == 'any':
+            pass  # Use data as is.
         else:
             raise SchemaError(SchemaCode.UNKNOWN_TYPE)
         return data
