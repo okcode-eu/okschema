@@ -28,7 +28,7 @@ def bad_val2_cont(x):
 ok_tests = [
     ('int', 12),
     ('string', 'aaa'),
-    ('float', '121.12', 121.12),
+    ('float', 121.12, 121.12),
     ('decimal', '121.1222222', decimal.Decimal('121.1222222')),
     ('bool', False),
     ({'@t': 'int'}, 12),

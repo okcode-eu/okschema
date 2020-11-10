@@ -221,18 +221,18 @@ def cast_data(ftype, data):
     if ftype == 'dict':
         if not isinstance(data, dict):
             raise NotValidError(ValidationCode.BAD_TYPE)
-    elif ftype in ['string', 'str', 'decimal', 'float']:
+    elif ftype == 'float':
+        try:
+            data = float(data)
+        except (ValueError, TypeError):
+            raise NotValidError(ValidationCode.BAD_TYPE)
+    elif ftype in ['string', 'str', 'decimal']:
         if not isinstance(data, str):
             raise NotValidError(ValidationCode.BAD_TYPE)
         if ftype == 'decimal':
             try:
                 data = decimal.Decimal(data)
             except (decimal.InvalidOperation, TypeError):
-                raise NotValidError(ValidationCode.BAD_TYPE)
-        elif ftype == 'float':
-            try:
-                data = float(data)
-            except (ValueError, TypeError):
                 raise NotValidError(ValidationCode.BAD_TYPE)
     elif ftype == 'bool':
         data = bool(data)
